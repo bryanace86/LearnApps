@@ -1,0 +1,56 @@
+﻿@page "/GameSelector"
+@using LearnApps.Shared.ViewModels.DeckViewModels
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@inject LearnApps.Client.Services.IDeckService DeckService
+@inject NavigationManager NavManager
+
+<h3>GameSelector</h3>
+@*
+    <SfButton @onclick="@(e => GameTypeSelected("MatchingGame"))" Content="Matching"></SfButton>
+    <SfButton @onclick="@(e => GameTypeSelected("TypingGame"))" Content="Typing"></SfButton>
+*@
+@if (!string.IsNullOrWhiteSpace(gameType))
+{
+    <div class="control-section">
+        <div class="row">
+            @foreach (DeckDTO deck in decks)
+            {
+                <div class="col-xs-6 col-sm-6 col-lg-6 col-md-6" @onclick="@(e => DeckSelected(deck.Id))">
+                    <SfCard>
+                        <CardHeader Title="@deck.Title" />
+                        <CardContent Content="@deck.Description" />
+                    </SfCard>
+                </div>
+            }
+        </div>
+    </div>
+    <p>Please select a deck</p>
+
+
+}
+
+@code {
+
+
+    public string gameType { get; set; }
+    public List<DeckDTO> decks { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        decks = await DeckService.Get();
+        GameTypeSelected("TypingGame");
+        StateHasChanged();
+    }
+
+    private void GameTypeSelected(string selectedGame)
+    {
+        gameType = selectedGame;
+        StateHasChanged();
+    }
+
+    private void DeckSelected(Guid deckSelected)
+    {
+        NavManager.NavigateTo($"/{gameType}/{deckSelected}");
+    }
+
+}

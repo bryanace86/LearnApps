@@ -1,0 +1,216 @@
+﻿@page "/TypingGame/{DeckId:guid}"
+@using System.Timers;
+@implements IDisposable;
+@inject LearnApps.Client.Services.IDeckService DeckService
+@using LearnApps.Shared.ViewModels.DeckViewModels
+@using LearnApps.Shared.ViewModels.FlashCardViewModels
+
+@*
+
+    <p> <button @onclick=@Resume @onkeypress="e => KeyPress(e)">Resume</button></p>
+    <p> <button @onclick=@Pause>Pause</button></p>
+    <p> <button @onclick=@Stop>Stop</button></p>
+
+*@
+<div class="d-flex flex-column vh-80">
+    <div class="d-flex">
+        @if (gameTimer != null)
+        {
+            <strong>Remaining Time:</strong> @gameTimer.TimeRemainging
+            <strong>Time for current string:</strong> @gameTimer.StopWatchValue
+            <strong>Total strings typed:</strong>@stringsTypedCounter
+        }
+    </div>
+    <div class="flex-grow-1">
+        <div class="align-self-center">
+            <SfButton Disabled="@isStartDisabled" @onclick=@StartTypeGame>Start</SfButton>
+        </div>
+        @if (currentFlashCard != null)
+        {
+            <div class="container-fluid text-sm-center p-5 bg-light">
+                <div class="image">
+                    <img src="@currentFlashCard.Image" alt="@currentFlashCard.Title" height="350" />
+                </div>
+                <h1 class="display-2">@currentFlashCard.Title</h1>
+                <h1 class="display-2">@gameMessage</h1>
+            </div>
+        }
+
+    </div>
+    <div>
+        <SfTextBox CssClass="typerInput" @ref="typedStringInput" Value="@TypedString" Input="OnInput"></SfTextBox>
+    </div>
+</div>
+
+<style>
+    .vh-80 {
+        height: 80vh;
+    }
+
+    .typerInput > input {
+        font-size: 5em !important;
+    }
+</style>
+
+
+@code {
+
+    [Parameter]
+    public Guid deckId { get; set; }
+    public SfTextBox typedStringInput;
+
+    public bool isStartDisabled { get; set; } = false;
+
+    private string TypedString
+    {
+        get { return typedString; }
+        set
+        {
+            typedString = value;
+            typedStringInput.FocusOut();
+            typedStringInput.FocusIn();
+        }
+    }
+    protected string typedString { get; set; } = string.Empty;
+
+    public DeckDTO deck { get; set; }
+    public FlashCardDTO currentFlashCard { get; set; }
+
+    int stringsTypedCounter;
+    string gameMessage;
+
+    public GameTimer gameTimer { get; set; }
+
+
+    public void OnInput(InputEventArgs args)
+    {
+        this.TypedString = "";
+
+        this.TypedString = args.Value.ToString();
+        int typedStringLength = this.TypedString.Length;
+
+        if (this.TypedString == currentFlashCard.Title)
+        {
+
+            stringsTypedCounter++;
+            this.TypedString = "";
+
+            GetFlashCard();
+            gameTimer.StopWatchValue = 0;
+        }
+        else if (typedStringLength >= currentFlashCard.Title.Length)
+        {
+            this.TypedString = "";
+        }
+        else if (typedStringLength > 0)
+        {
+
+            if (this.typedString[typedStringLength - 1] != currentFlashCard.Title[typedStringLength - 1])
+            {
+                this.TypedString = "";
+            }
+        }
+
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        deck = await DeckService.Get(deckId);
+        gameTimer = new GameTimer(10);
+        gameTimer.Timer.Elapsed += TimerOnElapsed;
+        StateHasChanged();
+    }
+
+    public async void StartTypeGame()
+    {
+        isStartDisabled = true;
+
+        GetFlashCard();
+
+        await typedStringInput.FocusIn();
+
+        gameTimer.Timer.Start();
+
+        await InvokeAsync(StateHasChanged);
+
+    }
+
+    public void GetFlashCard()
+    {
+        Random rnd = new Random();
+        currentFlashCard = deck.FlashCards[rnd.Next(0, deck.FlashCards.Count)];
+    }
+
+    public void CreateGameTimer()
+    {
+        stringsTypedCounter = 0;
+
+    }
+
+    public void StartGameTimer()
+    {
+        gameTimer.Timer.Start();
+    }
+
+    public void PauseGameTimer()
+    {
+        gameTimer.Timer.Stop();
+    }
+
+    public void ResetGameTimer()
+    {
+
+    }
+
+    public void Dispose()
+    {
+        if (gameTimer.Timer != null)
+        {
+            gameTimer.Timer.Dispose();
+        }
+    }
+
+    public class GameTimer
+    {
+        public GameTimer(int totalTime)
+        {
+            Timer = new Timer();
+            Timer.Interval = 1000;
+            TotalTimer = totalTime;
+            TimeRemainging = totalTime;
+            TotalElapsedTime = 0;
+            StopWatchValue = 0;
+
+        }
+
+        public Timer Timer { get; set; }
+        public int TotalTimer { get; set; }
+        public int TimeRemainging { get; set; }
+        public int TotalElapsedTime { get; set; }
+        public int StopWatchValue { get; set; }
+
+    }
+
+    public void TimerOnElapsed(object sender, ElapsedEventArgs e)
+    {
+        gameTimer.StopWatchValue++;
+        gameTimer.TotalElapsedTime++;
+        gameTimer.TimeRemainging--;
+
+        StateHasChanged();
+
+        if (gameTimer.TotalElapsedTime >= gameTimer.TotalTimer)
+        {
+            gameTimer.Timer.Dispose();
+
+            gameTimer.StopWatchValue = 0;
+            gameTimer.TotalElapsedTime = 0;
+            gameTimer.TotalTimer = 0;
+            typedStringInput.FocusOut();
+            //StateHasChanged();
+            isStartDisabled = false;
+            gameMessage = "The time has expired.";
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,93 @@
+﻿@page "/FlashCards"
+@using LearnApps.Shared
+
+<SfGrid TValue="Deck" AllowPaging="true"
+        Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Cancel", "Update"})">
+    <SfDataManager Url="api/Deck" Adaptor="Adaptors.WebApiAdaptor"></SfDataManager>
+    <GridEditSettings AllowAdding="true"
+                      AllowDeleting="true"
+                      AllowEditing="true"
+                      Mode="EditMode.Dialog">
+    </GridEditSettings>
+    <GridColumns>
+        <GridColumn Field=@nameof(Deck.Id) HeaderText="Deck ID" IsPrimaryKey="true" Visible="false"></GridColumn>
+        <GridColumn Field=@nameof(Deck.Title) HeaderText="Title" Width="150">
+            <Template>
+                @{
+                    var deck = (context as Deck);
+                    <a href="@($"Decks/{deck.Id}")">@deck.Title</a>
+                }
+            </Template>
+        </GridColumn>
+        <GridColumn Field=@nameof(Deck.Description) HeaderText="Description"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+@*
+    <a href="/Decks/Create">Create a new Deck</a>
+    <h3>Decks</h3>
+    @if (decks == null)
+    {
+        <p>Loading</p>
+    }
+    else if (decks.Count == 0)
+    {
+        <p>No Records Found</p>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var deck in decks)
+            {
+                <div class="col-sm-12 col-md-6 col-lg-4 my-2">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">@deck.Title</h5>
+                            <p class="card-text">@deck.Description</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="Decks/@deck.Id" class="btn btn-primary">View</a>
+                            <a href="Decks/Edit/@deck.Id" class="btn btn-primary">Edit</a>
+                            <button @onclick="() => Delete(deck.Id)" class="btn btn-primary">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+*@
+
+@code {
+
+
+    @*
+        List<Deck> decks { get; set; }
+
+        protected override async Task OnInitializedAsync()
+        {
+            decks = await DeckService.Get();
+            StateHasChanged();
+        }
+
+        private async Task Delete(Guid id)
+        {
+            //Modal.OpenDialog();
+
+            //await jsRuntime.InvokeVoidAsync("ToggleModal");
+
+            /*
+            HttpResponseMessage result = await DeckService.Delete(deck);
+            if (result.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("Decks");
+            }
+            else
+            {
+
+            }
+            */
+
+        }
+    *@
+}

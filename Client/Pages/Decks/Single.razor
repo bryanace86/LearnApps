@@ -1,0 +1,162 @@
+﻿@page "/Decks/{id:guid}"
+
+@using LearnApps.Shared
+@using LearnApps.Shared.ViewModels.FlashCardViewModels
+@using LearnApps.Shared.ViewModels.DeckViewModels
+
+@inject HttpClient Http
+@inject LearnApps.Client.Services.IDeckService DeckService
+@inject LearnApps.Client.Services.IFlashCardService FlashCardService
+
+
+@if (deck == null)
+{
+    <p>Loading</p>
+}
+else
+{
+    <div class="container-fluid text-sm-center p-5 bg-light">
+        <h1 class="display-2">@deck.Title</h1>
+        <p class="lead">@deck.Description</p>
+    </div>
+
+
+    <SfGrid TValue="FlashCardCreateDTO" AllowPaging="true" Query="@Qry" Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Cancel", "Update"})">
+        <!--DataSource="deck.FlashCards"-->
+        <SfDataManager Url="api/FlashCard" Adaptor="Adaptors.WebApiAdaptor"></SfDataManager>
+        <GridEditSettings AllowAdding="true"
+                          AllowDeleting="true"
+                          AllowEditing="true"
+                          Mode="EditMode.Dialog">
+            
+        </GridEditSettings>
+        <!--<GridEvents OnBeginEdit="OnBeginEditHandle" TValue="FlashCardDTO"></GridEvents>-->
+        <GridColumns>
+            <GridColumn Field=@nameof(FlashCardCreateDTO.Id) HeaderText="Flash Card ID" IsPrimaryKey="true" Visible="false"></GridColumn>
+            <GridColumn Field="@nameof(FlashCardCreateDTO.Decks)">
+                <EditTemplate>
+                    @{
+                        var flashCard = (context as FlashCardCreateDTO);
+                        if(flashCard.Decks == null)
+                        {
+                            flashCard.Decks = new Guid[]
+                                {
+                                    deck.Id
+                                };
+                        }
+                        <SfMultiSelect TItem="DeckDTO" TValue="Guid[]" Placeholder="Select a Deck" Query="@DeckQry" @bind-Value="@flashCard.Decks">
+                            <SfDataManager Url="api/Deck" Adaptor="Adaptors.WebApiAdaptor" CrossDomain=true ></SfDataManager>
+                            <MultiSelectFieldSettings Text="Title" Value="Id"></MultiSelectFieldSettings>
+                        </SfMultiSelect>
+
+                    }
+                </EditTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(FlashCardCreateDTO.Image) HeaderText="Image" Width="250">
+
+                <Template>
+                    @{
+                        var flashCard = (context as FlashCardCreateDTO);
+                        <div class="image">
+                            <img src="@($"{flashCard.Image}")" alt="@flashCard.Title" loading="lazy" height="50" />
+                        </div>
+                    }
+                </Template>
+            </GridColumn>
+            <GridColumn Field=@nameof(FlashCardCreateDTO.Title) HeaderText="Title" Width="150">
+                <Template>
+                    @{
+                        var flashCard = (context as FlashCardCreateDTO);
+                        <a href="@($"FlashCards/{flashCard.Id}")">@flashCard.Title</a>
+                    }
+                </Template>
+            </GridColumn>
+            <GridColumn Field=@nameof(FlashCardCreateDTO.Description) HeaderText="Description"></GridColumn>
+            <GridColumn Field=@nameof(FlashCardCreateDTO.Level) HeaderText="Level"></GridColumn>
+        </GridColumns>
+        <!--<GridEvents TValue="FlashCardCreateDTO" OnActionBegin="ActionBegin"></GridEvents>-->
+    </SfGrid>
+
+}
+
+
+
+@code {
+
+    [Parameter]
+    public Guid id { get; set; }
+
+    public Query Qry = new Query();
+    public Query DeckQry = new Query();
+
+    private DeckDTO deck { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Qry.AddParams("DeckId", id);
+        deck = await DeckService.Get(id);
+    }
+
+
+    public void OnBeginEditHandle()
+    {
+        Console.WriteLine();
+    }
+
+
+    public void ActionBegin(ActionEventArgs<FlashCardDTO> arg)
+    {
+        Console.WriteLine(arg.RequestType);
+        //Handles add operation
+        //Handles edit operation. During edit operation, original object will be cloned.
+        if (arg.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            Console.WriteLine("ActionBegin - Save");
+            arg.Data.Decks = new List<DeckDTO>();
+            arg.Data.Decks.Add(deck);
+            Console.WriteLine(arg.Data);
+        }
+        @*
+        if (arg.RequestType.Equals(Syncfusion.Blazor.Grids.Action.Save))
+        {
+            //Console.WriteLine(arg);
+            Console.WriteLine("Saved");
+            //Console.WriteLine(arg.Data);
+            //Console.WriteLine(deck);
+
+            arg.Data.Decks = new List<DeckDTO>();
+
+            arg.Data.Decks.Add(deck);
+
+            var flashCard = await FlashCardService.Post(arg.Data);
+            Console.WriteLine(flashCard);
+
+            //await DeckService.AttachFlashCard(deck.Id, flashCard.Content);
+
+            //deck.FlashCards.Add(flashCard);
+            //await DeckService.Put(deck);
+
+            //deck.FlashCards.Add(arg.Data);
+
+            //Console.WriteLine(arg.Data);
+            //arg.Data.Decks = new List<DeckDTO>();
+            //arg.Data.Decks.Add(deck);
+
+        }
+        *@
+
+
+
+    }
+
+
+    public void OnActionComplete(BeginEditArgs<FlashCardDTO> arg)
+    {
+        Console.WriteLine("OnActionComplete");
+        //Console.WriteLine(deck);
+        // Here you can customize your code
+
+
+    }
+
+}

@@ -1,0 +1,27 @@
+﻿<SfButton @onclick="@OpenDialog">Open Dialog</SfButton>
+
+<SfDialog Width="500px" ShowCloseIcon="true" @bind-Visible="@IsVisible">
+    <DialogTemplates>
+        <Header> Dialog </Header>
+        <Content> Dialog enabled with Zoom effect </Content>
+    </DialogTemplates>
+    <DialogAnimationSettings Effect="@AnimationEffect" Duration=400 />
+    <DialogButtons>
+        <DialogButton Content="Hide" IsPrimary="true" OnClick="@CloseDialog" />
+    </DialogButtons>
+</SfDialog>
+
+@code {
+    private bool IsVisible { get; set; } = true;
+    private DialogEffect AnimationEffect = DialogEffect.Zoom;
+
+    public void OpenDialog()
+    {
+        this.IsVisible = true;
+    }
+
+    public void CloseDialog()
+    {
+        this.IsVisible = false;
+    }
+}

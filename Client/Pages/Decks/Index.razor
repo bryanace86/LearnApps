@@ -1,0 +1,28 @@
+﻿@page "/Decks"
+@using LearnApps.Shared.ViewModels.DeckViewModels
+
+<SfGrid TValue="DeckDTO" AllowPaging="true"
+        Toolbar="@(new List<string>() { "Add", "Edit", "Delete", "Cancel", "Update" })">
+    <SfDataManager Url="api/Deck" Adaptor="Adaptors.WebApiAdaptor"></SfDataManager>
+    <GridEditSettings AllowAdding="true"
+                      AllowDeleting="true"
+                      AllowEditing="true"
+                      Mode="EditMode.Dialog">
+    </GridEditSettings>
+    <GridColumns>
+        <GridColumn Field=@nameof(DeckDTO.Id) HeaderText="Deck ID" IsPrimaryKey="true" Visible="false"></GridColumn>
+        <GridColumn Field=@nameof(DeckDTO.Title) HeaderText="Title" Width="150">
+            <Template>
+                @{
+                    var deck = (context as DeckDTO);
+                    <a href="@($"Decks/{deck.Id}")">@deck.Title</a>
+                }
+            </Template>
+        </GridColumn>
+        <GridColumn Field=@nameof(DeckDTO.Description) HeaderText="Description"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+@code {
+
+}

@@ -1,0 +1,54 @@
+﻿@page "/FlashCards/Edit/{id:guid}"
+
+@using LearnApps.Shared.ViewModels.DeckViewModels
+@inject LearnApps.Client.Services.IDeckService DeckService
+@inject NavigationManager Navigation
+
+<h3>Create</h3>
+@if (deck == null)
+{
+    <div>loading...</div>
+}
+else
+{
+    <EditForm Model="@deck" OnSubmit="@SubmitForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <InputText id="name" @bind-Value="deck.Title" />
+        <InputText id="name" @bind-Value="deck.Description" />
+
+        <button type="submit">Submit</button>
+    </EditForm>
+}
+
+
+
+@code {
+    private string modalMessage { get; set; }
+
+    [Parameter]
+    public Guid id { get; set; }
+
+    private DeckDTO deck { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        deck = await DeckService.Get(id);
+        StateHasChanged();
+    }
+
+    private async Task SubmitForm()
+    {
+        HttpResponseMessage result = await DeckService.Put(deck);
+        if (result.IsSuccessStatusCode)
+        {
+            Navigation.NavigateTo("Decks");
+        }
+        else
+        {
+
+        }
+
+    }
+}
